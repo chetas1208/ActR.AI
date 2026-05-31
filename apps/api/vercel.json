@@ -7,6 +7,19 @@
   },
   "routes": [
     { "src": "/", "dest": "/api/health" },
+    { "src": "/api/health", "dest": "/api/health" },
+    { "src": "/api/ready", "dest": "/api/ready" },
+    { "src": "/api/providers/status", "dest": "/api/providers_status" },
+    { "src": "/api/uploads/presign", "dest": "/api/uploads_presign" },
+    { "src": "/api/uploads/transcript/presign", "dest": "/api/transcript_upload_presign" },
+    { "src": "/api/workflows/youtube/start", "dest": "/api/workflows_youtube_start" },
+    { "src": "/api/workflows/upload/start", "dest": "/api/workflows_upload_start" },
+    { "src": "/api/workflows/direct-file/start", "dest": "/api/workflows_direct_file_start" },
+    { "src": "/api/workflows/([^/]+)/continue", "dest": "/api/workflows_continue" },
+    { "src": "/api/workflows/([^/]+)", "dest": "/api/workflows_get" },
+    { "src": "/api/actions/([^/]+)/run", "dest": "/api/actions_run" },
+    { "src": "/api/rtrvr/run", "dest": "/api/rtrvr_run" },
+    { "src": "/api/webhooks/tigris", "dest": "/api/webhooks_tigris" },
     { "src": "/api/(.*)", "dest": "/api/$1" }
   ],
   "env": {

@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     public: {
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'ActR.AI',
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8080',
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8080'),
       enableYoutubeInput: process.env.NUXT_PUBLIC_ENABLE_YOUTUBE_INPUT !== 'false',
       enableUploadInput: process.env.NUXT_PUBLIC_ENABLE_UPLOAD_INPUT !== 'false',
       enableDirectFileInput: process.env.NUXT_PUBLIC_ENABLE_DIRECT_FILE_INPUT !== 'false',

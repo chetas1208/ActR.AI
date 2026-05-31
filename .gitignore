@@ -39,9 +39,9 @@ tmp/
 .tmp/
 *.tmp
 *.log
+new
 
 # Go binaries and coverage
-apps/api/api
 *.cover
 *.out
 coverage/
@@ -59,3 +59,4 @@ go.work.sum
 # Python cache (for local tooling scripts)
 __pycache__/
 *.pyc
+new/
