@@ -1,303 +1,276 @@
-# GoTube Lite — API Specification
+# Gorube Flow — API Specification
 
-Base URL: `http://localhost:8080/api/v1`
+Base URL (production): `https://gorube-api.vercel.app`
+Base URL (local): `http://localhost:8080`
 
----
-
-## Auth
-
-### POST /auth/register
-Create a new user account.
-
-**Auth**: None
-
-**Request Body**:
-```json
-{
-  "username": "johndoe",
-  "email": "john@example.com",
-  "password": "securepass123"
-}
-```
-
-**Validation**: username 3-50 chars, email valid, password 8-128 chars
-
-**Response** `201`:
-```json
-{
-  "access_token": "eyJhbG...",
-  "user": { "id": "uuid", "username": "johndoe", "email": "john@example.com" }
-}
-```
-
-**Set-Cookie**: `refresh_token=...; HttpOnly; Path=/api/v1/auth`
-
-**Errors**: `400` validation, `409` user exists
-
----
-
-### POST /auth/login
-
-**Auth**: None
-
-**Request Body**:
-```json
-{ "email": "john@example.com", "password": "securepass123" }
-```
-
-**Response** `200`: Same as register
-
-**Errors**: `401` invalid credentials
-
----
-
-### POST /auth/logout
-
-**Auth**: Required
-
-**Response** `200`:
-```json
-{ "message": "logged out" }
-```
-
----
-
-### GET /auth/me
-
-**Auth**: Required
-
-**Response** `200`:
-```json
-{ "id": "uuid", "username": "johndoe", "email": "john@example.com" }
-```
-
----
-
-### POST /auth/refresh
-
-**Auth**: None (uses refresh_token cookie)
-
-**Response** `200`: Same as login (new access + refresh tokens)
-
----
-
-## Videos
-
-### POST /videos/initiate-upload
-
-**Auth**: Required | **Rate Limited**: 10/min
-
-**Request Body**:
-```json
-{
-  "title": "My Video",
-  "description": "A great video",
-  "tags": ["tutorial", "go"],
-  "filename": "video.mp4",
-  "content_type": "video/mp4",
-  "file_size": 52428800
-}
-```
-
-**Validation**: title 1-255 chars, description max 5000, tags max 20, file type/size limits
-
-**Response** `201`:
-```json
-{
-  "video_id": "uuid",
-  "upload_url": "https://...(presigned PUT URL)...",
-  "object_key": "raw/userId/videoId/original.mp4"
-}
-```
-
----
-
-### POST /videos/{id}/complete-upload
-
-**Auth**: Required (owner only)
-
-**Response** `200`:
-```json
-{ "message": "upload completed, processing started" }
-```
-
-**Errors**: `403` not owner, `400` invalid state
-
----
-
-### GET /videos
-
-**Auth**: Optional
-
-**Query**: `page`, `per_page`
-
-**Response** `200`:
-```json
-{
-  "videos": [{ ...video }],
-  "total_count": 100,
-  "page": 1,
-  "per_page": 20
-}
-```
-
----
-
-### GET /videos/{id}
-
-**Auth**: Optional
-
-**Response** `200`: Full video object with tags, username, user_has_liked
-
----
-
-### PATCH /videos/{id}
-
-**Auth**: Required (owner only)
-
-**Request Body** (all optional):
-```json
-{
-  "title": "Updated Title",
-  "description": "New desc",
-  "tags": ["updated"],
-  "visibility": "unlisted"
-}
-```
-
----
-
-### DELETE /videos/{id}
-
-**Auth**: Required (owner only)
-
-**Response** `200`: `{ "message": "video deleted" }`
-
----
-
-### POST /videos/{id}/view
-
-**Auth**: Optional
-
-**Query**: `session_id` (optional)
-
-**Response** `200`: `{ "message": "view recorded" }`
-
----
-
-### POST /videos/{id}/like
-
-**Auth**: Required
-
-**Response** `200`:
-```json
-{ "liked": true }
-```
-
-Toggles like state. Returns current state.
-
----
-
-### DELETE /videos/{id}/like
-
-**Auth**: Required
-
-**Response** `200`: `{ "message": "like removed" }`
-
----
-
-### GET /videos/{id}/playback
-
-**Auth**: Optional
-
-**Response** `200`:
-```json
-{
-  "playback_url": "https://...(signed R2 GET URL, 2h expiry)...",
-  "content_type": "video/mp4"
-}
-```
-
-**Errors**: `404` if video not ready
-
----
-
-### GET /videos/my
-
-**Auth**: Required
-
-**Query**: `page`, `per_page`
-
-**Response**: Same as GET /videos (but includes all statuses for the authenticated user)
-
----
-
-## Comments
-
-### GET /videos/{id}/comments
-
-**Auth**: Optional
-
-**Query**: `page`, `per_page`
-
-**Response** `200`:
-```json
-{
-  "comments": [{ "id": "...", "username": "...", "body": "...", ... }],
-  "total_count": 5,
-  "page": 1,
-  "per_page": 20
-}
-```
-
----
-
-### POST /videos/{id}/comments
-
-**Auth**: Required
-
-**Request Body**:
-```json
-{ "body": "Great video!", "parent_id": null }
-```
-
-**Validation**: body 1-2000 chars
-
-**Response** `201`: Comment object
-
----
-
-## Search
-
-### GET /search
-
-**Auth**: Optional
-
-**Query**: `q` (required), `page`, `per_page`, `sort_by` (relevance|recent|views)
-
-**Response**: Same format as video list
-
----
-
-## Trending
-
-### GET /trending
-
-**Auth**: Optional
-
-**Query**: `limit` (default 20, max 50)
-
-**Response** `200`: Array of video objects
+All responses are JSON. All errors return `{ "error": "message" }`.
 
 ---
 
 ## Health
 
-### GET /health
-Returns `{ "status": "ok" }` — always 200
+### GET /api/health
 
-### GET /ready
-Checks DB and Redis connectivity. Returns 200 or 503.
+No auth required.
 
-### GET /metrics
-Prometheus metrics endpoint.
+**Response 200:**
+
+```json
+{ "ok": true, "service": "gorube-api" }
+```
+
+### GET /api/ready
+
+Returns provider availability.
+
+**Response 200:**
+
+```json
+{
+  "ok": true,
+  "checks": {
+    "storage": "ok",
+    "db": "ok",
+    "ai": "configured",
+    "daytona": "configured",
+    "rtrvr": "configured",
+    "youtube_api": "not_configured"
+  }
+}
+```
+
+---
+
+## Uploads
+
+### POST /api/uploads/presign
+
+Initiate a direct-to-Tigris upload. Returns a presigned PUT URL.
+
+**Request:**
+
+```json
+{
+  "filename": "video.mp4",
+  "contentType": "video/mp4",
+  "fileSize": 52428800,
+  "title": "My Video"
+}
+```
+
+**Response 201:**
+
+```json
+{
+  "jobId": "uuid",
+  "uploadUrl": "https://...",
+  "objectKey": "videos/{jobId}/source/original.mp4"
+}
+```
+
+### POST /api/uploads/transcript/presign
+
+Presigned URL for uploading a transcript/audio fallback.
+
+**Request:**
+
+```json
+{
+  "jobId": "uuid",
+  "filename": "transcript.vtt",
+  "contentType": "text/vtt"
+}
+```
+
+**Response 200:**
+
+```json
+{
+  "uploadUrl": "https://...",
+  "objectKey": "videos/{jobId}/source/transcript.vtt"
+}
+```
+
+---
+
+## Workflows
+
+### POST /api/workflows/youtube/start
+
+**Request:**
+
+```json
+{ "youtubeUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
+```
+
+**Response 201:**
+
+```json
+{
+  "jobId": "uuid",
+  "status": "waiting_for_user_input",
+  "requiresUpload": true,
+  "video": {
+    "youtubeVideoId": "dQw4w9WgXcQ",
+    "youtubeEmbedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "title": "Never Gonna Give You Up",
+    "thumbnailUrl": "https://...",
+    "channel": "Rick Astley"
+  },
+  "message": "YouTube metadata fetched. Please upload a transcript to continue."
+}
+```
+
+### POST /api/workflows/upload/start
+
+**Request:**
+
+```json
+{
+  "jobId": "uuid",
+  "objectKey": "videos/{jobId}/source/original.mp4",
+  "title": "My Video"
+}
+```
+
+**Response 200:**
+
+```json
+{ "jobId": "uuid", "status": "transcribing" }
+```
+
+### POST /api/workflows/direct-file/start
+
+**Request:**
+
+```json
+{
+  "fileUrl": "https://example.com/lecture.mp4",
+  "title": "Lecture Recording",
+  "sourceRightsConfirmed": true
+}
+```
+
+**Response 201:**
+
+```json
+{ "jobId": "uuid", "status": "source_ready" }
+```
+
+### GET /api/workflows/{jobId}
+
+Get complete workflow details including steps, action cards, claims, browser runs, execution runs, and signed artifact URLs.
+
+**Response 200:** `WorkflowDetails` — see `apps/web/types/index.ts`.
+
+### POST /api/workflows/{jobId}/continue
+
+Advance the workflow by one bounded step.
+
+**Response 200:**
+
+```json
+{
+  "jobId": "uuid",
+  "status": "summarizing",
+  "progress": 40,
+  "requiresUserInput": false
+}
+```
+
+---
+
+## Actions
+
+### POST /api/actions/{actionCardId}/run
+
+Run a code action card via Daytona.
+
+**Request:**
+
+```json
+{ "mode": "daytona" }
+```
+
+**Response 200:**
+
+```json
+{
+  "runId": "uuid",
+  "status": "completed",
+  "exitCode": 0,
+  "logsKey": "videos/{jobId}/daytona/execution_logs.json"
+}
+```
+
+If Daytona is not configured:
+
+```json
+{
+  "error": "provider_not_configured",
+  "provider": "Daytona",
+  "detail": "Provider not configured: add DAYTONA_API_KEY to enable Daytona."
+}
+```
+
+---
+
+## Browser Research
+
+### POST /api/rtrvr/run
+
+Start a Rtrvr browser automation / source research task.
+
+**Request:**
+
+```json
+{
+  "jobId": "uuid",
+  "actionCardId": "uuid (optional)",
+  "task": "Find official documentation and sources for these claims",
+  "targetUrls": ["https://example.com"]
+}
+```
+
+**Response 200:**
+
+```json
+{
+  "browserRunId": "uuid",
+  "status": "completed",
+  "outputKey": "videos/{jobId}/rtrvr/browser_results.json",
+  "taskId": "rtrvr-task-id"
+}
+```
+
+If Rtrvr is not configured:
+
+```json
+{
+  "error": "provider_not_configured",
+  "provider": "Rtrvr",
+  "detail": "Provider not configured: add RTRVR_API_KEY to enable browser research."
+}
+```
+
+---
+
+## Webhooks
+
+### POST /api/webhooks/tigris
+
+Called by Tigris when an object is created. Advances job status for matching source keys.
+
+Validates `X-Webhook-Secret` header if `WEBHOOK_SECRET` is set.
+
+---
+
+## Error Codes
+
+| HTTP | Meaning |
+| --- | --- |
+| 400 | Bad request / invalid JSON |
+| 422 | Validation error (field-level) |
+| 404 | Not found |
+| 503 | Provider not configured |
+| 502 | External provider error |

@@ -2,16 +2,26 @@
 node_modules/
 vendor/
 
+# Package manager artifacts
+pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # Build outputs
 .next/
+.nuxt/
+.output/
 out/
 dist/
+build/
 bin/
 
 # Environment
 .env
 .env.local
 .env.*.local
+.env.*.secret
 
 # IDE
 .vscode/
@@ -24,16 +34,28 @@ bin/
 .DS_Store
 Thumbs.db
 
-# Temp
+# Temp / logs
 tmp/
+.tmp/
 *.tmp
 *.log
 
-# Go
-backend/api/api
-backend/worker/worker
-
-# Test
-coverage/
+# Go binaries and coverage
+apps/api/api
 *.cover
 *.out
+coverage/
+
+# Go workspace / test cache
+go.work.sum
+
+# TypeScript / tooling cache
+*.tsbuildinfo
+.eslintcache
+
+# Test reports
+.nyc_output/
+
+# Python cache (for local tooling scripts)
+__pycache__/
+*.pyc

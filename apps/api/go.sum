@@ -1,0 +1,3 @@
+// This file will be populated by running: cd apps/api && go mod tidy
+// The go.sum is generated from go.mod dependencies.
+// Run: cd apps/api && go mod download && go mod tidy

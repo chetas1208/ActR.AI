@@ -1,117 +1,128 @@
-# GoTube Lite — Architecture Document
+# Gorube Flow — Architecture Document
 
-## System Overview
+## Original GoTube Foundations
 
-GoTube Lite is a monorepo containing three main services:
+GoTube provided the following production-quality patterns that Gorube Flow builds on:
 
-1. **Web** (Next.js) — SSR frontend with client interactivity
-2. **API** (Go) — REST API for all business logic
-3. **Worker** (Go) — Background video processor
+- **S3-compatible storage abstraction** — interface + S3 client. Reused verbatim, target swapped from MinIO/R2 to Tigris.
+- **Presigned PUT upload flow** — browser uploads directly to object storage. Preserved for zero-copy file ingestion.
+- **Upload session + status lifecycle** — extended into the full workflow state machine.
+- **Go repository pattern** — type-safe database access layer. Extended to cover workflow jobs, steps, action cards, claims, browser runs, execution runs.
+- **Handler helpers** — `decodeJSON`, `writeJSON`, `writeError`. Adapted into `internal/httpx`.
+- **CORS handling** — preserved and extended.
+- **Health/readiness endpoints** — extended with provider availability checks.
+- **Migration-based schema management** — same numbered migration style.
 
-## Data Flow
+## Browser Research Provider
 
-### Upload Sequence
+Browser automation and source research are handled exclusively by **Rtrvr.ai** (`internal/rtrvr`). No other browser research provider is used.
 
-```
-User → Frontend (upload form)
-  → POST /api/v1/videos/initiate-upload
-    → API creates video record (status: uploaded)
-    → API creates upload_session
-    → API generates presigned PUT URL for R2
-    → Returns { video_id, upload_url, object_key }
+---
 
-User → Frontend (XHR PUT to presigned URL)
-  → File uploads directly to Cloudflare R2
-  → Frontend tracks progress via XHR events
+## Source Modes
 
-User → Frontend (POST /api/v1/videos/{id}/complete-upload)
-  → API verifies object exists via HeadObject
-  → API updates upload_session to completed
-  → API updates video status to queued
-  → API creates video_processing_job
-  → API enqueues job to Redis Stream
-```
+| Mode | Source Type | Rights |
+| --- | --- | --- |
+| YouTube Link | `youtube` | `youtube_embed_only` |
+| File Upload | `upload` | `uploaded_by_user` |
+| Authorized Direct URL | `authorized_direct_file` | `authorized_direct_file` |
 
-### Processing Sequence
+---
 
-```
-Worker → Redis XREADGROUP (blocking poll)
-  → Receives job message { job_id, video_id }
-  → Fetches job record from DB (idempotency check)
-  → Updates job status to running
-  → Updates video status to processing
-  → Downloads raw video from R2 to temp directory
-  → FFmpeg transcode: H.264/AAC, CRF 23, medium, faststart
-  → FFmpeg thumbnail: frame at 25% duration, 640px wide
-  → Uploads processed MP4 to R2 (processed bucket)
-  → Uploads thumbnail to R2 (thumbnails bucket)
-  → Extracts duration via ffprobe
-  → Updates video record: status=ready, processed_object_key, thumbnail_object_key, duration
-  → Updates job status to completed
-  → Cleans up temp files
-  → ACKs Redis message
+## Tigris Artifact Model
+
+```text
+videos/{jobId}/source/original.mp4           ← uploaded or downloaded file
+videos/{jobId}/source/transcript.vtt         ← user-uploaded transcript
+videos/{jobId}/youtube/metadata.json         ← YouTube API response
+videos/{jobId}/transcript/transcript.json    ← parsed transcript
+videos/{jobId}/analysis/summary.json         ← AI-generated summary
+videos/{jobId}/analysis/action_cards.json    ← AI-generated actions
+videos/{jobId}/analysis/claims.json          ← AI-extracted claims
+videos/{jobId}/rtrvr/source_research.json    ← Rtrvr source research task
+videos/{jobId}/rtrvr/browser_results.json    ← Rtrvr browser results
+videos/{jobId}/daytona/execution_logs.json   ← Daytona run output
+videos/{jobId}/exports/final_workflow.json   ← Complete workflow export
 ```
 
-### Playback Sequence
+All objects are private. Access is via signed URLs with configurable TTL.
 
+---
+
+## Workflow State Machine
+
+```text
+created
+  ↓
+queued
+  ↓
+metadata_fetching      (YouTube mode: fetch title, description, embed URL)
+  ↓
+source_ready           (file available in Tigris or YouTube metadata stored)
+  ↓ or → waiting_for_user_input  (transcript needed — user must upload)
+transcribing           (prepare transcript text)
+  ↓
+chunking               (segment for context windows)
+  ↓
+summarizing            (OpenAI → summary.json in Tigris)
+  ↓
+extracting_actions     (OpenAI → action_cards.json in Tigris, DB rows)
+  ↓
+extracting_claims      (OpenAI → claims.json in Tigris, DB rows)
+  ↓
+researching_with_rtrvr (Rtrvr → browser research, update claims, browser_runs row)
+  ↓
+finalizing             (assemble final_workflow.json)
+  ↓
+ready ✓                OR  failed ✗ (at any step)
 ```
-User → GET /watch/{id}
-  → Frontend SSR/CSR fetches video metadata
-  → Frontend fetches GET /api/v1/videos/{id}/playback
-    → API generates presigned GET URL for processed MP4 in R2
-    → Returns { playback_url, content_type }
-  → HTML5 <video> element loads from signed R2 URL
-  → R2 handles byte-range requests natively
-  → Frontend fires POST /api/v1/videos/{id}/view
+
+Each step is bounded — it runs within a single Vercel Function invocation.
+The frontend polls `GET /api/workflows/{jobId}` every 2 seconds and calls `POST /api/workflows/{jobId}/continue` to advance.
+
+---
+
+## Provider Responsibilities
+
+| Provider | Package | Responsibilities |
+| --- | --- | --- |
+| Tigris | `internal/storage` | Store/retrieve all artifacts, presigned URLs, signed playback |
+| OpenAI-compatible | `internal/agents` | Summary, action cards, claims extraction, JSON validation + repair, Rtrvr task generation |
+| Rtrvr | `internal/rtrvr` | Browser automation, source gathering, claim research, docs lookup |
+| Daytona | `internal/daytona` | Create sandbox, run code, capture logs, delete sandbox |
+| YouTube | `internal/youtube` | Parse video ID, fetch Data API / oEmbed metadata |
+| InsForge/Postgres | `internal/db` | InsForge HTTP adapter + Postgres adapter + memory (dev) |
+
+---
+
+## Frontend Architecture
+
+```text
+apps/web/
+├── pages/
+│   ├── index.vue           Landing + YouTube quick submit
+│   ├── new.vue             Three source mode cards
+│   └── workflows/[id].vue  Live dashboard with polling
+├── composables/
+│   ├── useApi.ts           Typed API client + uploadToTigris helper
+│   └── useWorkflowPolling.ts  Polling + auto-advance logic
+├── stores/
+│   └── workflow.ts         Recent jobs (persisted to localStorage)
+├── components/
+│   ├── layout/AppShell     Nav + footer + sponsor badges
+│   ├── workflow/           Timeline, SummaryCard, WaitingForInputPanel
+│   ├── actions/            ActionCard, ClaimCard, BrowserResearchPanel, ExecutionLogPanel
+│   ├── video/              VideoPreview (YouTube embed + Tigris playback)
+│   └── upload/             UploadDropzone, DirectFileUrlForm
 ```
 
-## Database Schema
+---
 
-9 tables: users, videos, video_tags, video_processing_jobs, comments, likes, video_views, refresh_tokens, upload_sessions.
+## Security Notes
 
-See migration files in `backend/api/migrations/`.
-
-## Video Status State Machine
-
-```
-uploaded → queued → processing → ready
-                              ↘ failed
-```
-
-## Trending Algorithm
-
-```sql
-score = (views in past 7 days) + (likes_count * 0.5)
-ORDER BY score DESC
-```
-
-Computed on read via indexed subquery. For scale, would move to periodic materialized view.
-
-## Search Implementation
-
-Uses PostgreSQL `pg_trgm` extension with GIN indexes on `videos.title` and `video_tags.tag`.
-Supports partial matching via ILIKE with trigram acceleration.
-
-## Auth Flow
-
-- JWT access token (15min TTL) — sent via Authorization header
-- Refresh token (7d TTL) — stored as SHA-256 hash in DB, sent via httpOnly cookie
-- Token rotation on refresh (old revoked, new issued)
-
-## FFmpeg Settings
-
-- Codec: libx264 + aac
-- Quality: CRF 23 (visually near-lossless, ~40-60% size reduction)
-- Preset: medium (good speed/compression balance)
-- Container: MP4 with movflags +faststart (progressive playback)
-- Audio: 128kbps AAC
-- Thumbnail: single JPEG frame, 640px wide, quality 3
-
-## Future Evolution (Post-MVP)
-
-- HLS packaging (multiple renditions)
-- Chunked/resumable uploads (tus protocol)
-- CDN integration
-- Admin panel
-- Advanced analytics
-- Multiple video qualities
+- Direct file URL validation rejects localhost, private IP ranges, non-HTTPS, disallowed content types.
+- Webhook requests are validated with a shared secret header.
+- Code execution never happens inside Vercel — only via Daytona sandboxes.
+- Browser automation never happens inside Vercel — only via Rtrvr.ai.
+- Tigris objects are private; only signed URLs are returned to clients.
+- YouTube content is embedded via the standard YouTube iframe API. No arbitrary downloading.

@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "functions": {
+    "api/**/*.go": {
+      "runtime": "vercel-golang@0.5.4"
+    }
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" }
+  ],
+  "env": {
+    "GO111MODULE": "on",
+    "GOPATH": "/vercel/path0"
+  }
+}
