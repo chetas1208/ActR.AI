@@ -137,6 +137,19 @@ func (c *Client) StoreArtifact(ctx context.Context, jobID, category, filename st
 	return key, nil
 }
 
+// GetObjectBytes downloads an object and returns its raw bytes.
+func (c *Client) GetObjectBytes(ctx context.Context, key string) ([]byte, error) {
+	out, err := c.s3.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get object %s: %w", key, err)
+	}
+	defer out.Body.Close()
+	return io.ReadAll(out.Body)
+}
+
 // HeadObject checks whether an object exists.
 func (c *Client) HeadObject(ctx context.Context, key string) error {
 	_, err := c.s3.HeadObject(ctx, &s3.HeadObjectInput{

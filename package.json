@@ -2,7 +2,7 @@
   "name": "gorube-flow",
   "private": true,
   "version": "1.0.0",
-  "description": "Gorube Flow – video-to-agent workflow engine built on GoTube",
+  "description": "ActR.AI – Video to agent workflow engine",
   "scripts": {
     "build": "pnpm build:web",
     "dev:web": "pnpm --filter @gorube/web dev",

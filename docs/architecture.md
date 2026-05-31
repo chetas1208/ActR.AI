@@ -1,8 +1,8 @@
-# Gorube Flow — Architecture Document
+# ActR.AI — Architecture Document
 
 ## Original GoTube Foundations
 
-GoTube provided the following production-quality patterns that Gorube Flow builds on:
+GoTube provided the following production-quality patterns that ActR.AI builds on:
 
 - **S3-compatible storage abstraction** — interface + S3 client. Reused verbatim, target swapped from MinIO/R2 to Tigris.
 - **Presigned PUT upload flow** — browser uploads directly to object storage. Preserved for zero-copy file ingestion.
@@ -64,11 +64,11 @@ transcribing           (prepare transcript text)
   ↓
 chunking               (segment for context windows)
   ↓
-summarizing            (OpenAI → summary.json in Tigris)
+summarizing            (NVIDIA NIM → summary.json in Tigris)
   ↓
-extracting_actions     (OpenAI → action_cards.json in Tigris, DB rows)
+extracting_actions     (NVIDIA NIM → action_cards.json in Tigris, DB rows)
   ↓
-extracting_claims      (OpenAI → claims.json in Tigris, DB rows)
+extracting_claims      (NVIDIA NIM → claims.json in Tigris, DB rows)
   ↓
 researching_with_rtrvr (Rtrvr → browser research, update claims, browser_runs row)
   ↓
@@ -87,7 +87,7 @@ The frontend polls `GET /api/workflows/{jobId}` every 2 seconds and calls `POST 
 | Provider | Package | Responsibilities |
 | --- | --- | --- |
 | Tigris | `internal/storage` | Store/retrieve all artifacts, presigned URLs, signed playback |
-| OpenAI-compatible | `internal/agents` | Summary, action cards, claims extraction, JSON validation + repair, Rtrvr task generation |
+| NVIDIA NIM | `internal/nvidia` + `internal/agents` | Summary, action cards, claims extraction, JSON validation + repair, Rtrvr task generation |
 | Rtrvr | `internal/rtrvr` | Browser automation, source gathering, claim research, docs lookup |
 | Daytona | `internal/daytona` | Create sandbox, run code, capture logs, delete sandbox |
 | YouTube | `internal/youtube` | Parse video ID, fetch Data API / oEmbed metadata |

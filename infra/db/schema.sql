@@ -1,4 +1,4 @@
--- Gorube Flow Database Schema
+-- ActR.AI Database Schema
 -- Postgres-compatible. Run this once against your database.
 -- InsForge Postgres endpoint: hhm46uz6.us-east.database.insforge.app
 

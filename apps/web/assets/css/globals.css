@@ -3,71 +3,82 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    color-scheme: dark;
-  }
+  :root { color-scheme: dark; }
 
   html {
-    @apply bg-surface-900 text-zinc-100 antialiased;
+    @apply bg-surface-950 text-zinc-100 antialiased;
     font-feature-settings: 'liga' 1, 'kern' 1;
   }
 
   body {
     @apply min-h-screen;
     background-image:
-      radial-gradient(ellipse at 20% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 90%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+      linear-gradient(rgba(34,211,238,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,211,238,0.03) 1px, transparent 1px),
+      radial-gradient(ellipse at 20% 10%, rgba(34,211,238,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 90%, rgba(139,92,246,0.05) 0%, transparent 55%);
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
   }
 
-  * {
-    @apply border-zinc-800;
-  }
+  * { @apply border-zinc-800; }
 
-  ::selection {
-    @apply bg-accent-500/30 text-white;
-  }
+  ::selection { @apply bg-cyan-500/30 text-white; }
 
-  ::-webkit-scrollbar {
-    @apply w-1.5;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-surface-800;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-zinc-600 rounded-full;
-  }
+  ::-webkit-scrollbar       { @apply w-1.5; }
+  ::-webkit-scrollbar-track { @apply bg-surface-800; }
+  ::-webkit-scrollbar-thumb { @apply bg-zinc-600 rounded-full; }
 }
 
 @layer components {
+  /* Card variants */
   .card {
     @apply bg-surface-800 border border-zinc-800/60 rounded-2xl;
   }
-
   .card-glass {
-    @apply backdrop-blur-sm bg-white/[0.03] border border-white/[0.06] rounded-2xl;
+    @apply backdrop-blur-sm bg-white/[0.02] border border-white/[0.06] rounded-2xl;
+  }
+  .card-glow {
+    @apply bg-surface-800 border border-cyan-500/20 rounded-2xl shadow-[0_0_20px_rgba(34,211,238,0.08)];
   }
 
+  /* Buttons */
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-5 py-2.5 bg-accent-500 hover:bg-accent-400 text-white font-medium rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98];
+    @apply inline-flex items-center gap-2 px-5 py-2.5
+           bg-gradient-to-r from-cyan-500 to-electric-500
+           hover:from-cyan-400 hover:to-electric-400
+           text-white font-semibold rounded-xl shadow-glow-cyan
+           transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
+           active:scale-[0.98];
   }
-
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-5 py-2.5 bg-surface-600 hover:bg-surface-500 text-zinc-200 font-medium rounded-xl border border-zinc-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center gap-2 px-5 py-2.5
+           bg-surface-600 hover:bg-surface-500
+           text-zinc-200 font-medium rounded-xl border border-zinc-700/50
+           transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-
   .btn-ghost {
-    @apply inline-flex items-center gap-2 px-4 py-2 hover:bg-surface-600 text-zinc-400 hover:text-zinc-200 rounded-xl transition-all duration-200;
+    @apply inline-flex items-center gap-2 px-4 py-2
+           hover:bg-surface-600 text-zinc-400 hover:text-zinc-200
+           rounded-xl transition-all duration-200;
   }
 
+  /* Input */
   .input-base {
-    @apply w-full bg-surface-700 border border-zinc-700/50 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/30 transition-all duration-200;
+    @apply w-full bg-surface-700 border border-zinc-700/50 rounded-xl
+           px-4 py-3 text-zinc-100 placeholder-zinc-500
+           focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30
+           transition-all duration-200;
   }
 
-  .badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
-  }
+  /* Badges */
+  .badge { @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium; }
+  .status-dot { @apply w-2 h-2 rounded-full; }
 
-  .status-dot {
-    @apply w-2 h-2 rounded-full;
+  /* Provider chip */
+  .provider-chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
+           bg-zinc-800/80 border border-zinc-700/50 text-zinc-400;
   }
 }

@@ -1,4 +1,4 @@
-# Gorube Flow — API Specification
+# ActR.AI — API Specification
 
 Base URL (production): `https://gorube-api.vercel.app`
 Base URL (local): `http://localhost:8080`

@@ -1,4 +1,4 @@
--- Migration 001: Gorube Flow initial schema
+-- Migration 001: ActR.AI initial schema
 -- Target: postgresql://...@hhm46uz6.us-east.database.insforge.app:5432/insforge
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";

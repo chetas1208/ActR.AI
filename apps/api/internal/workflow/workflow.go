@@ -169,7 +169,7 @@ func (e *Engine) runSummarizingStep(ctx context.Context, job *models.WorkflowJob
 	_ = e.startStep(ctx, job.ID, stepName, models.StatusSummarizing, 40)
 
 	if !e.agents.IsConfigured() {
-		msg := "AI provider not configured: add OPENAI_API_KEY to enable summarization."
+		msg := "AI provider not configured: add NIM_API_KEY to enable summarization via NVIDIA NIM."
 		_ = e.failStep(ctx, job.ID, stepName, msg)
 		return &StepResult{NextStatus: models.StatusFailed}, nil
 	}

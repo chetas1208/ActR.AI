@@ -77,7 +77,7 @@ const (
 	RunStatusFailed    = "failed"
 )
 
-// WorkflowJob is the central entity for a Gorube Flow processing job.
+// WorkflowJob is the central entity for an ActR.AI workflow job.
 type WorkflowJob struct {
 	ID                  uuid.UUID  `json:"id" db:"id"`
 	UserID              *uuid.UUID `json:"userId,omitempty" db:"user_id"`

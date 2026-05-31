@@ -18,6 +18,7 @@ export type WorkflowStatus =
   | 'failed'
 
 export type SourceType = 'youtube' | 'upload' | 'authorized_direct_file'
+export type SourceMode  = 'youtube' | 'upload' | 'direct'
 
 export interface WorkflowJob {
   id: string
@@ -147,51 +148,54 @@ export interface YouTubeStartResponse {
   message?: string
 }
 
-export interface ApiError {
-  error: string
-  field?: string
-  detail?: string
-  provider?: string
+export interface ProviderStatus {
+  nvidiaLLM: boolean
+  nvidiaASR: boolean
+  tigris: boolean
+  daytona: boolean
+  rtrvr: boolean
+  youtube: boolean
+  database: 'insforge' | 'postgres' | 'memory' | 'missing'
 }
 
 export const TERMINAL_STATUSES: WorkflowStatus[] = ['ready', 'failed', 'waiting_for_user_input']
 
 export const STATUS_LABELS: Record<WorkflowStatus, string> = {
-  created: 'Created',
-  queued: 'Queued',
-  metadata_fetching: 'Fetching Metadata',
-  source_ready: 'Source Ready',
+  created:               'Created',
+  queued:                'Queued',
+  metadata_fetching:     'Fetching Metadata',
+  source_ready:          'Source Ready',
   waiting_for_user_input: 'Waiting for Input',
-  transcribing: 'Transcribing',
-  chunking: 'Chunking',
-  summarizing: 'Summarizing',
-  extracting_actions: 'Extracting Actions',
-  extracting_claims: 'Extracting Claims',
+  transcribing:          'Transcribing',
+  chunking:              'Processing',
+  summarizing:           'Summarizing',
+  extracting_actions:    'Extracting Actions',
+  extracting_claims:     'Extracting Claims',
   researching_with_rtrvr: 'Browser Research',
-  preparing_execution: 'Preparing Execution',
-  running_daytona: 'Running Code',
-  running_rtrvr: 'Running Browser Task',
-  finalizing: 'Finalizing',
-  ready: 'Ready',
-  failed: 'Failed',
+  preparing_execution:   'Preparing Execution',
+  running_daytona:       'Running Code',
+  running_rtrvr:         'Browser Automation',
+  finalizing:            'Finalizing',
+  ready:                 'Ready',
+  failed:                'Failed',
 }
 
-export const STATUS_PROGRESS: Record<WorkflowStatus, number> = {
-  created: 0,
-  queued: 5,
-  metadata_fetching: 10,
-  source_ready: 15,
-  waiting_for_user_input: 15,
-  transcribing: 25,
-  chunking: 35,
-  summarizing: 50,
-  extracting_actions: 65,
-  extracting_claims: 75,
-  researching_with_rtrvr: 85,
-  preparing_execution: 88,
-  running_daytona: 92,
-  running_rtrvr: 92,
-  finalizing: 97,
-  ready: 100,
-  failed: 0,
+export const STATUS_COLOR: Record<WorkflowStatus, string> = {
+  created:               'text-zinc-400',
+  queued:                'text-zinc-400',
+  metadata_fetching:     'text-electric-400',
+  source_ready:          'text-electric-400',
+  waiting_for_user_input: 'text-violet-400',
+  transcribing:          'text-cyan-400',
+  chunking:              'text-cyan-400',
+  summarizing:           'text-cyan-400',
+  extracting_actions:    'text-cyan-400',
+  extracting_claims:     'text-cyan-400',
+  researching_with_rtrvr: 'text-violet-400',
+  preparing_execution:   'text-electric-400',
+  running_daytona:       'text-electric-400',
+  running_rtrvr:         'text-violet-400',
+  finalizing:            'text-cyan-400',
+  ready:                 'text-emerald-400',
+  failed:                'text-red-400',
 }
