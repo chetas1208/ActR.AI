@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Gorube Flow – video-to-agent workflow engine built on GoTube",
   "scripts": {
+    "build": "pnpm build:web",
     "dev:web": "pnpm --filter @gorube/web dev",
     "build:web": "pnpm --filter @gorube/web build",
     "dev:all": "pnpm --parallel --filter './apps/*' dev"
@@ -12,7 +13,8 @@
     "typescript": "^5.5.0"
   },
   "engines": {
-    "node": ">=20",
+    "node": "20.x",
     "pnpm": ">=9"
-  }
+  },
+  "packageManager": "pnpm@9.15.0"
 }
