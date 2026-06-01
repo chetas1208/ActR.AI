@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/chetas1208/gorube-flow/api/internal/httpx"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/httpx"
 )
 
 // Handler is the Vercel function entry point for GET /api/health

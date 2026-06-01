@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/chetas1208/gorube-flow/api/internal/httpx"
-	"github.com/chetas1208/gorube-flow/api/internal/observability"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/httpx"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/observability"
 )
 
 // Handler is the Vercel function entry point for POST /api/workflows/{jobId}/continue

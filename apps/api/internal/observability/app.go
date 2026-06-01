@@ -5,16 +5,16 @@ import (
 	"log"
 	"sync"
 
-	"github.com/chetas1208/gorube-flow/api/internal/agents"
-	"github.com/chetas1208/gorube-flow/api/internal/config"
-	"github.com/chetas1208/gorube-flow/api/internal/daytona"
-	"github.com/chetas1208/gorube-flow/api/internal/db"
-	"github.com/chetas1208/gorube-flow/api/internal/nvidia"
-	"github.com/chetas1208/gorube-flow/api/internal/rtrvr"
-	"github.com/chetas1208/gorube-flow/api/internal/storage"
-	"github.com/chetas1208/gorube-flow/api/internal/transcription"
-	"github.com/chetas1208/gorube-flow/api/internal/workflow"
-	"github.com/chetas1208/gorube-flow/api/internal/youtube"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/agents"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/config"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/daytona"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/db"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/nvidia"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/rtrvr"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/storage"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/transcription"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/workflow"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/youtube"
 )
 
 // App holds all singletons shared across Vercel function handlers.

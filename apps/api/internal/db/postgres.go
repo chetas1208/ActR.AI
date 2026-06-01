@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/chetas1208/gorube-flow/api/internal/models"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/models"
 	"github.com/google/uuid"
 )
 
@@ -69,7 +69,12 @@ func (r *PostgresRepository) UpdateWorkflowJobStatus(ctx context.Context, id uui
 
 func (r *PostgresRepository) UpdateWorkflowJobUserInputRequired(ctx context.Context, id uuid.UUID, required bool, inputType string) error {
 	_, err := r.db.ExecContext(ctx,
-		`UPDATE workflow_jobs SET requires_user_input=$1,required_input_type=$2,status=$3,updated_at=NOW() WHERE id=$4`,
+		`UPDATE workflow_jobs
+		 SET requires_user_input=$1,
+		     required_input_type=NULLIF($2, ''),
+		     status=CASE WHEN $1 THEN $3 ELSE status END,
+		     updated_at=NOW()
+		 WHERE id=$4`,
 		required, inputType, models.StatusWaitingForUserInput, id)
 	return err
 }

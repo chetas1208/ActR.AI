@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chetas1208/gorube-flow/api/internal/httpx"
-	"github.com/chetas1208/gorube-flow/api/internal/models"
-	"github.com/chetas1208/gorube-flow/api/internal/observability"
-	"github.com/chetas1208/gorube-flow/api/internal/storage"
-	"github.com/chetas1208/gorube-flow/api/internal/validation"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/httpx"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/models"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/observability"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/storage"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/validation"
 	"github.com/google/uuid"
 )
 

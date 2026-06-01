@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chetas1208/gorube-flow/api/internal/config"
-	"github.com/chetas1208/gorube-flow/api/internal/storage"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/config"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/storage"
 )
 
 // TranscriptResult is the normalised output from any transcription provider.

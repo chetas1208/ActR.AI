@@ -48,6 +48,7 @@ coverage/
 
 # Go workspace / test cache
 go.work.sum
+.tools/
 
 # TypeScript / tooling cache
 *.tsbuildinfo

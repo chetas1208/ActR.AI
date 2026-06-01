@@ -1,13 +1,14 @@
 {
-  "name": "gorube-flow",
+  "name": "actr-ai",
   "private": true,
   "version": "1.0.0",
   "description": "ActR.AI – Video to agent workflow engine",
   "scripts": {
     "build": "pnpm build:web",
+    "dev:api": "cd apps/api && (command -v go >/dev/null 2>&1 && go run ./cmd/local || ../../.tools/go/bin/go run ./cmd/local)",
     "dev:web": "pnpm --filter @gorube/web dev",
     "build:web": "pnpm --filter @gorube/web build",
-    "dev:all": "pnpm --parallel --filter './apps/*' dev"
+    "dev:all": "pnpm --parallel dev:api dev:web"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

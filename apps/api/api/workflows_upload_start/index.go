@@ -2,11 +2,13 @@ package handler
 
 import (
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/chetas1208/gorube-flow/api/internal/httpx"
-	"github.com/chetas1208/gorube-flow/api/internal/models"
-	"github.com/chetas1208/gorube-flow/api/internal/observability"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/httpx"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/models"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/observability"
 	"github.com/google/uuid"
 )
 
@@ -65,11 +67,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update job with source key
-	if err := app.DB.UpdateWorkflowJobSource(r.Context(), jobID, req.ObjectKey); err != nil {
+	isTranscriptUpload := objectKeyLooksLikeTranscript(req.ObjectKey)
+
+	// Update job with uploaded object key.
+	if isTranscriptUpload {
+		if err := app.DB.UpdateWorkflowJobTranscript(r.Context(), jobID, req.ObjectKey); err != nil {
+			httpx.WriteError(w, http.StatusInternalServerError, "failed to update transcript key")
+			return
+		}
+	} else if err := app.DB.UpdateWorkflowJobSource(r.Context(), jobID, req.ObjectKey); err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "failed to update job")
 		return
 	}
+	_ = app.DB.UpdateWorkflowJobUserInputRequired(r.Context(), jobID, false, "")
 
 	// Update title if provided
 	if req.Title != "" && (job.Title == nil || *job.Title == "") {
@@ -85,17 +95,25 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			title = *job.Title
 		}
 		video = &models.Video{
-			ID:             uuid.New(),
-			JobID:          jobID,
-			Title:          title,
-			TigrisVideoKey: &req.ObjectKey,
-			Status:         "uploaded",
-			CreatedAt:      now,
-			UpdatedAt:      now,
+			ID:        uuid.New(),
+			JobID:     jobID,
+			Title:     title,
+			Status:    "uploaded",
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		if isTranscriptUpload {
+			video.TranscriptKey = &req.ObjectKey
+		} else {
+			video.TigrisVideoKey = &req.ObjectKey
 		}
 		_ = app.DB.CreateVideo(r.Context(), video)
 	} else {
-		video.TigrisVideoKey = &req.ObjectKey
+		if isTranscriptUpload {
+			video.TranscriptKey = &req.ObjectKey
+		} else {
+			video.TigrisVideoKey = &req.ObjectKey
+		}
 		video.Status = "uploaded"
 		video.UpdatedAt = now
 		_ = app.DB.UpdateVideo(r.Context(), video)
@@ -115,4 +133,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		JobID:  jobID.String(),
 		Status: status,
 	})
+}
+
+func objectKeyLooksLikeTranscript(objectKey string) bool {
+	ext := strings.ToLower(filepath.Ext(objectKey))
+	switch ext {
+	case ".txt", ".srt", ".vtt":
+		return true
+	default:
+		return strings.Contains(strings.ToLower(objectKey), "/transcript")
+	}
 }

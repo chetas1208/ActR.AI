@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chetas1208/gorube-flow/api/internal/config"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/config"
 )
 
 // Client calls NVIDIA NIM via the OpenAI-compatible /chat/completions endpoint.

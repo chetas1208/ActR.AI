@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/chetas1208/gorube-flow/api/internal/models"
-	"github.com/chetas1208/gorube-flow/api/internal/nvidia"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/models"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/nvidia"
 )
 
 // Client wraps the NVIDIA NIM client for workflow-specific generation tasks.

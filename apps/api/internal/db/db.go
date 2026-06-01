@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/chetas1208/gorube-flow/api/internal/config"
-	"github.com/chetas1208/gorube-flow/api/internal/models"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/config"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/models"
 	"github.com/google/uuid"
 )
 

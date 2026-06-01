@@ -13,7 +13,7 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	gcfg "github.com/chetas1208/gorube-flow/api/internal/config"
+	gcfg "github.com/chetas1208/ActR.AI/apps/api/internal/config"
 )
 
 // Client wraps S3-compatible Tigris operations.

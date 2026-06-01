@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/chetas1208/gorube-flow/api/internal/models"
-	"github.com/chetas1208/gorube-flow/api/internal/storage"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/models"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/storage"
 )
 
 // Client wraps the Rtrvr.ai browser automation API.
@@ -67,6 +70,20 @@ type BrowserResult struct {
 	Error   string                 `json:"error,omitempty"`
 }
 
+type endpointNotFoundError struct {
+	Path   string
+	Status int
+	Body   string
+}
+
+func (e *endpointNotFoundError) Error() string {
+	msg := fmt.Sprintf("rtrvr endpoint %s returned HTTP %d", e.Path, e.Status)
+	if e.Body != "" {
+		msg += ": " + e.Body
+	}
+	return msg
+}
+
 // StartBrowserTask starts a new Rtrvr browser automation task.
 func (c *Client) StartBrowserTask(ctx context.Context, input BrowserTaskInput) (*BrowserTask, error) {
 	body, _ := json.Marshal(input)
@@ -84,6 +101,14 @@ func (c *Client) StartBrowserTask(ctx context.Context, input BrowserTaskInput) (
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		bodyStr := strings.TrimSpace(string(respBody))
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, &endpointNotFoundError{Path: "/v1/tasks", Status: resp.StatusCode, Body: bodyStr}
+		}
+		if bodyStr != "" {
+			return nil, fmt.Errorf("rtrvr returned HTTP %d on task start: %s", resp.StatusCode, bodyStr)
+		}
 		return nil, fmt.Errorf("rtrvr returned HTTP %d on task start", resp.StatusCode)
 	}
 
@@ -92,6 +117,95 @@ func (c *Client) StartBrowserTask(ctx context.Context, input BrowserTaskInput) (
 		return nil, fmt.Errorf("decode rtrvr task: %w", err)
 	}
 	return &task, nil
+}
+
+type agentRequest struct {
+	Input    string   `json:"input"`
+	URLs     []string `json:"urls,omitempty"`
+	Response struct {
+		Verbosity string `json:"verbosity,omitempty"`
+	} `json:"response,omitempty"`
+}
+
+type agentResponse struct {
+	Success      bool                   `json:"success"`
+	Status       string                 `json:"status"`
+	TrajectoryID string                 `json:"trajectoryId"`
+	Output       interface{}            `json:"output,omitempty"`
+	Result       interface{}            `json:"result,omitempty"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	Error        string                 `json:"error,omitempty"`
+	Message      string                 `json:"message,omitempty"`
+}
+
+func (c *Client) runAgentTask(ctx context.Context, input BrowserTaskInput) (*BrowserResult, error) {
+	reqBody := agentRequest{
+		Input: input.Task,
+		URLs:  input.TargetURLs,
+	}
+	reqBody.Response.Verbosity = "final"
+
+	body, _ := json.Marshal(reqBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiURL+"/agent", bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("rtrvr agent run: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		bodyStr := strings.TrimSpace(string(respBody))
+		if bodyStr != "" {
+			return nil, fmt.Errorf("rtrvr returned HTTP %d on /agent: %s", resp.StatusCode, bodyStr)
+		}
+		return nil, fmt.Errorf("rtrvr returned HTTP %d on /agent", resp.StatusCode)
+	}
+
+	var payload agentResponse
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return nil, fmt.Errorf("decode rtrvr /agent response: %w", err)
+	}
+
+	taskID := payload.TrajectoryID
+	if taskID == "" {
+		taskID = fmt.Sprintf("rtrvr-%d", time.Now().UnixNano())
+	}
+
+	status := strings.ToLower(payload.Status)
+	resultStatus := "completed"
+	if status == "failed" || status == "cancelled" || status == "error" || status == "requires_input" {
+		resultStatus = "failed"
+	}
+
+	var content string
+	if s, ok := payload.Output.(string); ok {
+		content = s
+	}
+
+	data := map[string]interface{}{
+		"output":   payload.Output,
+		"result":   payload.Result,
+		"metadata": payload.Metadata,
+	}
+	errMsg := payload.Error
+	if errMsg == "" {
+		errMsg = payload.Message
+	}
+
+	return &BrowserResult{
+		TaskID:  taskID,
+		Status:  resultStatus,
+		Content: content,
+		Data:    data,
+		Error:   errMsg,
+	}, nil
 }
 
 // GetBrowserTaskResult polls for the result of a running task.
@@ -128,6 +242,15 @@ func (c *Client) RunBrowserAction(ctx context.Context, jobID, task string, targe
 	}
 	browserTask, err := c.StartBrowserTask(ctx, input)
 	if err != nil {
+		var nf *endpointNotFoundError
+		if errors.As(err, &nf) {
+			result, runErr := c.runAgentTask(ctx, input)
+			if runErr != nil {
+				return nil, "", fmt.Errorf("start browser task: %w", runErr)
+			}
+			key, _ := c.StoreBrowserResultToTigris(ctx, jobID, result)
+			return result, key, nil
+		}
 		return nil, "", fmt.Errorf("start browser task: %w", err)
 	}
 

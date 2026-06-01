@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/chetas1208/gorube-flow/api/internal/httpx"
-	"github.com/chetas1208/gorube-flow/api/internal/observability"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/httpx"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/observability"
 	"github.com/google/uuid"
 )
 

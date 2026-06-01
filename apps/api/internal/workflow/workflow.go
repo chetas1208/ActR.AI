@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/chetas1208/gorube-flow/api/internal/agents"
-	"github.com/chetas1208/gorube-flow/api/internal/db"
-	"github.com/chetas1208/gorube-flow/api/internal/models"
-	"github.com/chetas1208/gorube-flow/api/internal/rtrvr"
-	"github.com/chetas1208/gorube-flow/api/internal/storage"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/agents"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/db"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/models"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/rtrvr"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/storage"
 	"github.com/google/uuid"
 )
 
@@ -113,6 +113,7 @@ func (e *Engine) runTranscriptStep(ctx context.Context, job *models.WorkflowJob)
 	var transcriptText string
 
 	if job.TranscriptTigrisKey != nil {
+		_ = e.db.UpdateWorkflowJobUserInputRequired(ctx, job.ID, false, "")
 		var raw map[string]string
 		if err := e.storage.GetJSON(ctx, *job.TranscriptTigrisKey, &raw); err == nil {
 			transcriptText = raw["text"]

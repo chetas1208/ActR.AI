@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chetas1208/gorube-flow/api/internal/storage"
+	"github.com/chetas1208/ActR.AI/apps/api/internal/storage"
 )
 
 // Client wraps the Daytona sandbox API for safe isolated code execution.
@@ -88,7 +88,7 @@ func (c *Client) CreateSandbox(ctx context.Context, language string) (*Sandbox, 
 	image := c.languageToImage(language)
 	body, _ := json.Marshal(map[string]interface{}{
 		"image":   image,
-		"labels":  map[string]string{"app": "gorube-flow"},
+		"labels":  map[string]string{"app": "actr-ai"},
 		"timeout": int(c.cmdTimeout.Seconds()),
 	})
 

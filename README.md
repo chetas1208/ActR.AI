@@ -146,8 +146,8 @@ pnpm install
 ### 2. Configure environment
 
 ```bash
-cp .env /path/to/.env.local   # already has working keys for dev
-# OR: copy infra/env/api.env.example → apps/api/.env.local
+cp infra/env/api.env.example apps/api/.env
+cp infra/env/web.env.example apps/web/.env
 ```
 
 Add your `NIM_API_KEY` from [build.nvidia.com](https://build.nvidia.com/).
@@ -161,8 +161,8 @@ psql $DATABASE_URL < apps/api/migrations/001_gorube_flow_schema.up.sql
 ### 4. Start development
 
 ```bash
+pnpm dev:api                                    # Go API on :8081 (local, no Vercel CLI)
 pnpm dev:web                                    # Nuxt on :3000
-cd apps/api && vercel dev --listen 8080         # API on :8080
 ```
 
 ---
